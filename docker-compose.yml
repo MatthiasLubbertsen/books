@@ -1,0 +1,14 @@
+services:
+  books:
+    build: .
+    ports:
+      - "8312:8312"
+    environment:
+      # change this before deploying anywhere real
+      - PIN=123456
+    volumes:
+      - books-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  books-data:

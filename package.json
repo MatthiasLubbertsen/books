@@ -1,0 +1,15 @@
+{
+  "name": "books",
+  "version": "1.0.0",
+  "description": "Track which books are at school vs. home",
+  "private": true,
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "cookie-parser": "^1.4.7"
+  }
+}
