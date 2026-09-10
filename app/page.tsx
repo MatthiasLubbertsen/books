@@ -7,7 +7,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function Page() {
   const [rows, authenticated] = await Promise.all([
-    prisma.book.findMany({ orderBy: { title: 'asc' } }),
+    prisma.book.findMany({
+      orderBy: { title: 'asc' },
+      include: { _count: { select: { moves: true } } },
+    }),
     getSession(),
   ]);
 
@@ -17,6 +20,7 @@ export default async function Page() {
     subject: row.subject,
     location: isLocation(row.location) ? row.location : 'home',
     createdAt: row.createdAt.toISOString(),
+    moveCount: row._count.moves,
   }));
 
   return <BooksApp initialBooks={books} initialAuthenticated={authenticated} />;

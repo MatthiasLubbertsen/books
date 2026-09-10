@@ -6,6 +6,14 @@ export type Book = {
   subject: string | null;
   location: Location;
   createdAt: string;
+  moveCount: number;
+};
+
+export type BookMove = {
+  id: string;
+  fromLocation: Location;
+  toLocation: Location;
+  movedAt: string;
 };
 
 export function isLocation(value: unknown): value is Location {

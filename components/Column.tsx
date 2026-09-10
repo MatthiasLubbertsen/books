@@ -9,13 +9,13 @@ export default function Column({
   label,
   books,
   authenticated,
-  onDelete,
+  onEdit,
 }: {
   location: Location;
   label: string;
   books: Book[];
   authenticated: boolean;
-  onDelete: (id: string) => void;
+  onEdit: (book: Book) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: location });
 
@@ -41,7 +41,7 @@ export default function Column({
               key={book.id}
               book={book}
               authenticated={authenticated}
-              onDelete={() => onDelete(book.id)}
+              onEdit={() => onEdit(book)}
             />
           ))
         )}

@@ -17,12 +17,12 @@ import { BookCardVisual } from './BookCard';
 export default function Board({
   books,
   authenticated,
-  onDelete,
+  onEdit,
   onDrop,
 }: {
   books: Book[];
   authenticated: boolean;
-  onDelete: (id: string) => void;
+  onEdit: (book: Book) => void;
   onDrop: (bookId: string, location: 'school' | 'home') => void;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -59,14 +59,14 @@ export default function Board({
           label="school"
           books={books.filter((b) => b.location === 'school')}
           authenticated={authenticated}
-          onDelete={onDelete}
+          onEdit={onEdit}
         />
         <Column
           location="home"
           label="home"
           books={books.filter((b) => b.location === 'home')}
           authenticated={authenticated}
-          onDelete={onDelete}
+          onEdit={onEdit}
         />
       </div>
       <DragOverlay dropAnimation={{ duration: 180, easing: 'ease-out' }}>

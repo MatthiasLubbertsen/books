@@ -6,18 +6,18 @@ import type { Book } from '@/lib/types';
 export function BookCardVisual({
   book,
   authenticated,
-  onDelete,
+  onEdit,
   dragging,
 }: {
   book: Book;
   authenticated: boolean;
-  onDelete?: () => void;
+  onEdit?: () => void;
   dragging?: boolean;
 }) {
   return (
     <div
       className={
-        'group flex items-center gap-2 rounded-lg border border-zinc-600/60 bg-zinc-700 px-3 py-2.5 ' +
+        'flex items-center gap-2 rounded-lg border border-zinc-600/60 bg-zinc-700 px-3 py-2.5 ' +
         'shadow-sm transition-shadow ' +
         (dragging ? 'shadow-lg ring-1 ring-zinc-500' : '')
       }
@@ -28,16 +28,17 @@ export function BookCardVisual({
           <div className="truncate text-xs text-zinc-400">{book.subject}</div>
         )}
       </div>
-      {authenticated && onDelete && (
+      {authenticated && onEdit && (
         <button
           type="button"
-          aria-label="delete book"
+          aria-label="edit book"
           onPointerDown={(e) => e.stopPropagation()}
-          onClick={onDelete}
-          className="shrink-0 rounded-md px-1.5 py-1 text-zinc-500 opacity-0 transition-opacity
-                     hover:text-red-400 group-hover:opacity-100 focus-visible:opacity-100"
+          onClick={onEdit}
+          className="shrink-0 rounded-md px-2 py-1 text-zinc-400 transition-colors
+                     hover:bg-zinc-600 hover:text-zinc-100 focus-visible:outline-none
+                     focus-visible:ring-2 focus-visible:ring-zinc-400"
         >
-          ✕
+          ⋯
         </button>
       )}
     </div>
@@ -47,11 +48,11 @@ export function BookCardVisual({
 export default function BookCard({
   book,
   authenticated,
-  onDelete,
+  onEdit,
 }: {
   book: Book;
   authenticated: boolean;
-  onDelete: () => void;
+  onEdit: () => void;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: book.id,
@@ -67,7 +68,7 @@ export default function BookCard({
         (isDragging ? 'opacity-30' : '')
       }
     >
-      <BookCardVisual book={book} authenticated={authenticated} onDelete={onDelete} />
+      <BookCardVisual book={book} authenticated={authenticated} onEdit={onEdit} />
     </div>
   );
 }

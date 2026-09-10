@@ -6,7 +6,8 @@ import MenuBar from './MenuBar';
 import Board from './Board';
 import LoginModal from './LoginModal';
 import AddBookModal from './AddBookModal';
-import { logoutAction, moveBookAction, deleteBookAction } from '@/app/actions';
+import EditBookModal from './EditBookModal';
+import { logoutAction, moveBookAction } from '@/app/actions';
 
 export default function BooksApp({
   initialBooks,
@@ -19,6 +20,7 @@ export default function BooksApp({
   const [authenticated, setAuthenticated] = useState(initialAuthenticated);
   const [loginOpen, setLoginOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [pendingMove, setPendingMove] = useState<{ bookId: string; location: Location } | null>(
     null,
   );
@@ -26,7 +28,9 @@ export default function BooksApp({
   function applyMove(bookId: string, location: Location) {
     const previous = books;
     setBooks((prev) => prev.map((b) => (b.id === bookId ? { ...b, location } : b)));
-    moveBookAction(bookId, location).catch(() => setBooks(previous));
+    moveBookAction(bookId, location)
+      .then((updated) => setBooks((prev) => prev.map((b) => (b.id === bookId ? updated : b))))
+      .catch(() => setBooks(previous));
   }
 
   function handleDrop(bookId: string, location: Location) {
@@ -36,12 +40,6 @@ export default function BooksApp({
       setPendingMove({ bookId, location });
       setLoginOpen(true);
     }
-  }
-
-  function handleDelete(id: string) {
-    const previous = books;
-    setBooks((prev) => prev.filter((b) => b.id !== id));
-    deleteBookAction(id).catch(() => setBooks(previous));
   }
 
   async function handleLogout() {
@@ -58,7 +56,12 @@ export default function BooksApp({
         onLogout={handleLogout}
       />
 
-      <Board books={books} authenticated={authenticated} onDelete={handleDelete} onDrop={handleDrop} />
+      <Board
+        books={books}
+        authenticated={authenticated}
+        onEdit={setEditingBook}
+        onDrop={handleDrop}
+      />
 
       <LoginModal
         open={loginOpen}
@@ -80,6 +83,19 @@ export default function BooksApp({
         open={addOpen}
         onOpenChange={setAddOpen}
         onAdded={(book) => setBooks((prev) => [...prev, book])}
+      />
+
+      <EditBookModal
+        book={editingBook}
+        onOpenChange={(open) => {
+          if (!open) setEditingBook(null);
+        }}
+        onSaved={(updated) => {
+          setBooks((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+        }}
+        onDeleted={(id) => {
+          setBooks((prev) => prev.filter((b) => b.id !== id));
+        }}
       />
     </div>
   );
