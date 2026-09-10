@@ -1,17 +1,18 @@
 FROM node:22-alpine
 
+# Prisma's query engine needs OpenSSL on Alpine.
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm install --omit=dev
+COPY package.json package-lock.json ./
+RUN npm ci
 
-COPY server.js ./
-COPY public ./public
+COPY . .
+RUN npm run build
 
 ENV PORT=8312
-ENV DATA_DIR=/app/data
 VOLUME ["/app/data"]
-
 EXPOSE 8312
 
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]

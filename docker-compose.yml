@@ -3,9 +3,10 @@ services:
     build: .
     ports:
       - "8312:8312"
+    env_file:
+      - .env
     environment:
-      # change this before deploying anywhere real
-      - PIN=123456
+      - DATABASE_URL=file:/app/data/books.db
     volumes:
       - books-data:/app/data
     restart: unless-stopped
