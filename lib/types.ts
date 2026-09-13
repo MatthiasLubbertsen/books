@@ -5,6 +5,9 @@ export type Book = {
   title: string;
   subject: string | null;
   location: Location;
+  isbn: string | null;
+  coverUrl: string | null;
+  hidden: boolean;
   createdAt: string;
   moveCount: number;
 };

@@ -1,6 +1,8 @@
 'use client';
 
 import { useDraggable } from '@dnd-kit/core';
+import { EllipsisIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import type { Book } from '@/lib/types';
 
 export function BookCardVisual({
@@ -17,16 +19,31 @@ export function BookCardVisual({
   return (
     <div
       className={
-        'flex items-center gap-2 rounded-lg border border-zinc-600/60 bg-zinc-700 px-3 py-2.5 ' +
+        'flex items-center gap-3 rounded-lg border border-border bg-secondary px-3 py-2.5 ' +
         'shadow-sm transition-shadow ' +
-        (dragging ? 'shadow-lg ring-1 ring-zinc-500' : '')
+        (dragging ? 'shadow-lg ring-1 ring-ring' : '')
       }
     >
+      {book.coverUrl && (
+        <img
+          src={book.coverUrl}
+          alt=""
+          className="h-10 w-7 shrink-0 rounded-sm object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+      )}
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-medium text-zinc-100">{book.title}</div>
-        {book.subject && (
-          <div className="truncate text-xs text-zinc-400">{book.subject}</div>
-        )}
+        <div className="flex items-center gap-1.5">
+          <span className="truncate text-sm font-medium text-foreground">{book.title}</span>
+          {book.hidden && (
+            <Badge variant="outline" className="shrink-0 text-muted-foreground">
+              hidden
+            </Badge>
+          )}
+        </div>
+        {book.subject && <div className="truncate text-xs text-muted-foreground">{book.subject}</div>}
       </div>
       {authenticated && onEdit && (
         <button
@@ -34,11 +51,11 @@ export function BookCardVisual({
           aria-label="edit book"
           onPointerDown={(e) => e.stopPropagation()}
           onClick={onEdit}
-          className="shrink-0 rounded-md px-2 py-1 text-zinc-400 transition-colors
-                     hover:bg-zinc-600 hover:text-zinc-100 focus-visible:outline-none
-                     focus-visible:ring-2 focus-visible:ring-zinc-400"
+          className="shrink-0 rounded-md px-2 py-1 text-muted-foreground transition-colors
+                     hover:bg-accent hover:text-foreground focus-visible:outline-none
+                     focus-visible:ring-2 focus-visible:ring-ring"
         >
-          ⋯
+          <EllipsisIcon className="size-4" />
         </button>
       )}
     </div>

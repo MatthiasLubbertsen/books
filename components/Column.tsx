@@ -24,17 +24,15 @@ export default function Column({
       ref={setNodeRef}
       className={
         'flex min-h-40 flex-1 flex-col gap-2 rounded-xl border p-3 transition-colors ' +
-        (isOver
-          ? 'border-zinc-500 bg-zinc-700'
-          : 'border-zinc-700/60 bg-zinc-800')
+        (isOver ? 'border-ring bg-accent' : 'border-border bg-card')
       }
     >
-      <h2 className="px-1 text-xs font-medium tracking-wide text-zinc-400 uppercase">
+      <h2 className="px-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
         {label}
       </h2>
       <div className="flex flex-1 flex-col gap-2">
         {books.length === 0 ? (
-          <p className="px-1 py-2 text-sm text-zinc-600">nothing here</p>
+          <p className="px-1 py-2 text-sm text-muted-foreground/70">nothing here</p>
         ) : (
           books.map((book) => (
             <BookCard
