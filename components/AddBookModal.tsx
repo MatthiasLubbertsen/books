@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ScanLineIcon } from 'lucide-react';
 import IsbnScanner from '@/components/IsbnScanner';
+import PhotoCapture from '@/components/PhotoCapture';
 import { addBookAction, lookupIsbnAction } from '@/app/actions';
 import { isValidIsbn } from '@/lib/isbn';
 import type { Book, Location } from '@/lib/types';
@@ -51,7 +52,7 @@ export default function AddBookModal({
     try {
       const result = await lookupIsbnAction(code);
       if (!result) {
-        setError("couldn't find that ISBN — you can still fill in the details manually");
+        setError("couldn't find that ISBN in any database — fill it in manually, or take a photo below");
         return;
       }
       setTitle((prev) => prev || result.title);
@@ -124,6 +125,7 @@ export default function AddBookModal({
             >
               <ScanLineIcon />
             </Button>
+            <PhotoCapture onCapture={setCoverUrl} />
           </div>
 
           {scanning && <IsbnScanner onScan={handleScan} />}

@@ -23,7 +23,14 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Separator } from '@/components/ui/separator';
 import { ScanLineIcon, EyeOffIcon, EyeIcon } from 'lucide-react';
 import IsbnScanner from '@/components/IsbnScanner';
-import { deleteBookAction, getBookHistoryAction, lookupIsbnAction, updateBookAction } from '@/app/actions';
+import PhotoCapture from '@/components/PhotoCapture';
+import {
+  deleteBookAction,
+  getBookHistoryAction,
+  lookupIsbnAction,
+  setBookHiddenAction,
+  updateBookAction,
+} from '@/app/actions';
 import { relativeTime } from '@/lib/format';
 import { isValidIsbn } from '@/lib/isbn';
 import type { Book, BookMove, Location } from '@/lib/types';
@@ -49,6 +56,7 @@ export default function EditBookModal({
   const [looking, setLooking] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [togglingHidden, setTogglingHidden] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [history, setHistory] = useState<BookMove[] | null>(null);
 
@@ -74,7 +82,7 @@ export default function EditBookModal({
     try {
       const result = await lookupIsbnAction(code);
       if (!result) {
-        setError("couldn't find that ISBN");
+        setError("couldn't find that ISBN in any database — take a photo below instead");
         return;
       }
       setCoverUrl(result.coverUrl);
@@ -108,6 +116,22 @@ export default function EditBookModal({
       setError(err instanceof Error ? err.message : 'failed to save');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleToggleHidden() {
+    if (!book) return;
+    const next = !hidden;
+    setHidden(next);
+    setTogglingHidden(true);
+    try {
+      const updated = await setBookHiddenAction(book.id, next);
+      onSaved(updated);
+    } catch (err) {
+      setHidden(!next);
+      setError(err instanceof Error ? err.message : 'failed to update');
+    } finally {
+      setTogglingHidden(false);
     }
   }
 
@@ -162,6 +186,7 @@ export default function EditBookModal({
             >
               <ScanLineIcon />
             </Button>
+            <PhotoCapture onCapture={setCoverUrl} />
           </div>
 
           {scanning && <IsbnScanner onScan={handleScan} />}
@@ -202,7 +227,8 @@ export default function EditBookModal({
           <Button
             type="button"
             variant="outline"
-            onClick={() => setHidden((v) => !v)}
+            onClick={handleToggleHidden}
+            disabled={togglingHidden}
             className="w-full"
           >
             {hidden ? <EyeIcon /> : <EyeOffIcon />}

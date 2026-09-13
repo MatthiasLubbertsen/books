@@ -186,6 +186,13 @@ export async function updateBookAction(
   return toBook(book);
 }
 
+export async function setBookHiddenAction(id: string, hidden: boolean): Promise<Book> {
+  await requireAuth();
+  const book = await prisma.book.update({ where: { id }, data: { hidden }, include: withMoveCount });
+  revalidatePath('/');
+  return toBook(book);
+}
+
 export async function deleteBookAction(id: string): Promise<void> {
   await requireAuth();
   await prisma.book.delete({ where: { id } });
@@ -208,14 +215,13 @@ export async function getBookHistoryAction(id: string): Promise<BookMove[]> {
 }
 
 // --- ISBN lookup ---
+//
+// Tried in order; first source that returns a title wins. Each is wrapped so
+// one source being down, rate-limited, or wrong never breaks the others.
 
-export async function lookupIsbnAction(
-  rawIsbn: string,
-): Promise<{ title: string; coverUrl: string | null } | null> {
-  await requireAuth();
-  const isbn = rawIsbn.replace(/[^0-9Xx]/g, '');
-  if (isbn.length !== 10 && isbn.length !== 13) return null;
+type IsbnResult = { title: string; coverUrl: string | null; source: string };
 
+async function lookupOpenLibrary(isbn: string): Promise<IsbnResult | null> {
   try {
     const res = await fetch(`https://openlibrary.org/isbn/${isbn}.json`, {
       signal: AbortSignal.timeout(8000),
@@ -227,8 +233,67 @@ export async function lookupIsbnAction(
     return {
       title,
       coverUrl: `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`,
+      source: 'Open Library',
     };
   } catch {
     return null;
   }
+}
+
+async function lookupGoogleBooks(isbn: string): Promise<IsbnResult | null> {
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`,
+      { signal: AbortSignal.timeout(8000) },
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const info = data.items?.[0]?.volumeInfo;
+    const title = typeof info?.title === 'string' ? info.title : null;
+    if (!title) return null;
+    const thumbnail: string | undefined = info?.imageLinks?.thumbnail ?? info?.imageLinks?.smallThumbnail;
+    return {
+      title,
+      coverUrl: thumbnail ? thumbnail.replace(/^http:/, 'https:') : null,
+      source: 'Google Books',
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Koninklijke Bibliotheek (Dutch national library) SRU catalog search — covers
+// a lot of Dutch-market books that Open Library/Google Books miss. No API key,
+// but it's a plain XML/SRU service, so this does light regex extraction rather
+// than pulling in a full XML parser for one field.
+async function lookupKb(isbn: string): Promise<IsbnResult | null> {
+  try {
+    const url =
+      'http://jsru.kb.nl/sru/sru?version=1.2&operation=searchRetrieve' +
+      '&x-collection=GGC&recordSchema=dcx&maximumRecords=1' +
+      `&query=${encodeURIComponent(`isbn=${isbn}`)}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return null;
+    const xml = await res.text();
+    const match = xml.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/);
+    const title = match?.[1]?.trim();
+    if (!title) return null;
+    return { title, coverUrl: null, source: 'KB' };
+  } catch {
+    return null;
+  }
+}
+
+export async function lookupIsbnAction(
+  rawIsbn: string,
+): Promise<{ title: string; coverUrl: string | null; source: string } | null> {
+  await requireAuth();
+  const isbn = rawIsbn.replace(/[^0-9Xx]/g, '');
+  if (isbn.length !== 10 && isbn.length !== 13) return null;
+
+  for (const lookup of [lookupOpenLibrary, lookupGoogleBooks, lookupKb]) {
+    const result = await lookup(isbn);
+    if (result) return result;
+  }
+  return null;
 }
